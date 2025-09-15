@@ -5,9 +5,7 @@ namespace App\Services;
 
 use App\Helper\CircuitBreaker;
 use App\Interfaces\MarketplaceInterface;
-use App\Repositories\ProductRepository;
 use Exception;
-use Mockery\Expectation;
 
 class MarketplaceService {
 
@@ -17,7 +15,39 @@ class MarketplaceService {
         return config("marketplace");
     }
 
-    private function instanceMarketplace(array $marketplaceConfig): MarketplaceInterface
+    private function getSourceFromUrl(string $url): ?string
+    {
+        if (preg_match('#https?://(?:[a-z0-9-]+\.)*([a-z0-9-]+)\.[a-z]{2,}#i', $url, $matches)) {
+            $domain = strtolower($matches[1]);
+            dd($domain);
+            $commonTlds = ['com', 'org', 'net', 'edu', 'gov', 'co', 'io'];
+            if (in_array($domain, $commonTlds)) {
+                if (preg_match('#https?://(?:[a-z0-9-]+\.)*([a-z0-9-]+)\.(?:[a-z0-9-]+\.)*([a-z]{2,})#i', $url, $deepMatches)) {
+                    return strtolower($deepMatches[1]);
+                }
+            }
+
+            return $domain;
+        }
+        return null;
+    }
+
+    public function extractProductId(string $url): array|null
+    {
+        $source = $this->getSourceFromUrl($url);
+        if (is_null($source)) {
+            return null;
+        }
+        $marketplace = config("marketplace.$source");
+        if (is_null($marketplace)) {
+            return null;
+        }
+
+        return $this->instanceMarketplace(config("marketplace.$source"))
+                    ->extractProductId($url);
+    }
+
+    public function instanceMarketplace(array $marketplaceConfig): MarketplaceInterface
     {
         // Ensure 'class' key exists
         if (!isset($marketplaceConfig['class'])) {

@@ -15,6 +15,12 @@ class AlibabaMarketplace extends BaseMarketplace implements MarketplaceInterface
         ];
     }
 
+    public static function extractProductId(string $url): array
+    {
+        preg_match('/detail\/(\d+)\.html/', $url, $matches);
+        return ['source' => 'alibaba', 'id' => $matches[1] ?? null];
+    }
+
     public function mapper($product) {
 
         return [

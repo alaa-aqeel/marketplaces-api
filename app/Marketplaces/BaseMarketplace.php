@@ -28,6 +28,12 @@ abstract class BaseMarketplace implements MarketplaceInterface {
 
     abstract public function mapper($product);
 
+
+    public static function extractProductId(string $url): array
+    {
+        return ['source' => null, 'id' => null];
+    }
+
     protected function client() {
         return Http::withHeaders([
             // 'Authorization' => 'Bearer ' . ($this->config['api_key'] ?? ''),
