@@ -3,6 +3,8 @@
 namespace App\Marketplaces;
 
 use App\Interfaces\MarketplaceInterface;
+use Exception;
+use Illuminate\Support\Str;
 
 class AlibabaMarketplace extends BaseMarketplace implements MarketplaceInterface
 {
@@ -15,16 +17,20 @@ class AlibabaMarketplace extends BaseMarketplace implements MarketplaceInterface
         ];
     }
 
-    public static function extractProductId(string $url): array
+    public static function extractProductId(string $url)
     {
         preg_match('/detail\/(\d+)\.html/', $url, $matches);
-        return ['source' => 'alibaba', 'id' => $matches[1] ?? null];
+        return $matches[1] ?? null;
     }
 
     public function mapper($product) {
-
+        if (!isset($product['id'])) {
+            throw new Exception("product id missing");
+        }
         return [
-            'external_id' => $product['id'] ?? null,
+            "id" => Str::uuid(),
+            'source_external_id' => "alibaba:".$product['id'],
+            'external_id' => $product['id'],
             'source' => 'alibaba',
             'title' => $product['title'] ?? null,
             'description' => $product['description'] ?? null,

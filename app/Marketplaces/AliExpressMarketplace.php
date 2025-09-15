@@ -15,11 +15,11 @@ class AliExpressMarketplace extends BaseMarketplace implements MarketplaceInterf
         ];
     }
 
-    public static function extractProductId(string $url): array
+    public static function extractProductId(string $url)
     {
         preg_match('/item\/(\d+)\.html/', $url, $matches);
 
-        return ['source' => 'aliexpress', 'id' => $matches[1] ?? null];
+        return $matches[1] ?? null;
     }
 
 

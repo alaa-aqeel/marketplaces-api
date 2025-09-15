@@ -5,6 +5,7 @@ namespace App\Services;
 
 use App\Helper\CircuitBreaker;
 use App\Interfaces\MarketplaceInterface;
+use App\Models\Product;
 use Exception;
 
 class MarketplaceService {
@@ -15,36 +16,32 @@ class MarketplaceService {
         return config("marketplace");
     }
 
-    private function getSourceFromUrl(string $url): ?string
+    public function getMarketplaceFromUrl(string $url): MarketplaceInterface|null
     {
         if (preg_match('#https?://(?:[a-z0-9-]+\.)*([a-z0-9-]+)\.[a-z]{2,}#i', $url, $matches)) {
-            $domain = strtolower($matches[1]);
-            dd($domain);
+            $source = strtolower($matches[1]);
             $commonTlds = ['com', 'org', 'net', 'edu', 'gov', 'co', 'io'];
-            if (in_array($domain, $commonTlds)) {
+            if (in_array($source, $commonTlds)) {
                 if (preg_match('#https?://(?:[a-z0-9-]+\.)*([a-z0-9-]+)\.(?:[a-z0-9-]+\.)*([a-z]{2,})#i', $url, $deepMatches)) {
-                    return strtolower($deepMatches[1]);
+                    $source = strtolower($deepMatches[1]);
                 }
             }
 
-            return $domain;
+            if (is_null($source)) {
+                return null;
+            }
+            $marketplace = config("marketplace.$source");
+            if (is_null($marketplace)) {
+                return null;
+            }
+            return $this->instanceMarketplace(config("marketplace.$source"));
         }
         return null;
     }
 
-    public function extractProductId(string $url): array|null
+    public function extractProductId(string $url): null|string
     {
-        $source = $this->getSourceFromUrl($url);
-        if (is_null($source)) {
-            return null;
-        }
-        $marketplace = config("marketplace.$source");
-        if (is_null($marketplace)) {
-            return null;
-        }
-
-        return $this->instanceMarketplace(config("marketplace.$source"))
-                    ->extractProductId($url);
+        return $this->getMarketplaceFromUrl($url)->extractProductId($url);
     }
 
     public function instanceMarketplace(array $marketplaceConfig): MarketplaceInterface
@@ -113,4 +110,24 @@ class MarketplaceService {
 
     }
 
+
+    public function getProductFromUrl(string $url)
+    {
+        $marketplace = $this->getMarketplaceFromUrl($url);
+        if (is_null($marketplace)) {
+            abort(response()->json([
+                "message" => "Invalid Url",
+            ]));
+        }
+        $id = $marketplace->extractProductId($url);
+        $product = Product::where("external_id", $id)->first(); // first search in database
+        if (is_null($product)) { // is null search in sites
+            $name = class_basename($marketplace::class); //
+            return CircuitBreaker::call($name, "$name:product-details:$id", function() use($marketplace, $id) {
+                return $marketplace->fetchProductDetails($id);
+            });
+        }
+
+        return $product;
+    }
 }

@@ -17,7 +17,7 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         return [
-            'external_id' => fake()->uuid(),
+            'external_id' => fake()->randomNumber(8),
             'source' => fake()->word(),
             'title' => fake()->sentence(3),
             'description' => fake()->paragraph(),

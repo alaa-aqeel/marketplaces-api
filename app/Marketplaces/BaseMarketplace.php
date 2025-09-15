@@ -29,9 +29,9 @@ abstract class BaseMarketplace implements MarketplaceInterface {
     abstract public function mapper($product);
 
 
-    public static function extractProductId(string $url): array
+    public static function extractProductId(string $url)
     {
-        return ['source' => null, 'id' => null];
+        return null;
     }
 
     protected function client() {

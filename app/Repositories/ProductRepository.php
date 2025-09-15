@@ -24,8 +24,12 @@ class ProductRepository
         $query->when($filters['source'] ?? null, function ($q, $source) {
             $q->where('source', $source);
         });
-        $query->when($filters['title'] ?? null, function ($q, $title) {
-            $q->where('title', 'like', "%{$title}%");
+        $query->when($filters['image_hash'] ?? null, function ($q, $hash) {
+            $q->where('image_hash', $hash);
+        });
+        $query->when($filters['search'] ?? null, function ($q, $value) {
+            $value = normalizeArabic($value);
+            return $q->whereSearch($value)->withRankSearch($value);
         });
 
         return $query;
@@ -67,6 +71,7 @@ class ProductRepository
          *  The updated data array with the uploaded file path and its hash
          */
         FileUpload::uploadProductImage($data);
+        $data['title'] = normalizeArabic($data["title"]);
 
         return Product::create($data);
     }
@@ -81,6 +86,9 @@ class ProductRepository
     public function update(Product $product, array $data)
     {
         FileUpload::uploadProductImage($data);
+        if (isset($data['title'])) {
+            $data['title'] = normalizeArabic($data["title"]);
+        }
         $product->update($data);
         $product->refresh();
 
@@ -90,7 +98,7 @@ class ProductRepository
     public function upsert(array $data)
     {
         return DB::table('products')->upsert($data,
-            ['external_id','source'],
+            ['source_external_id'],
             [
                 'title',
                 'description',

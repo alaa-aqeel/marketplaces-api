@@ -32,7 +32,7 @@ class InsertProductsFromMarketplace implements ShouldQueue
         $service = new MarketplaceService;
         $repository = new ProductRepository;
         $products = $service->instanceMarketplace($marketplace)->fetchProducts(["limit" => $this->limit]);
-
         $repository->upsert($products);
+
     }
 }
