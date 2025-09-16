@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
-class Order extends Model
+class Payment extends Model
 {
     use HasUuids;
 
@@ -15,16 +15,17 @@ class Order extends Model
      * @var list<string>
      */
     protected $fillable = [
-        "fullname",
-        "phone_number",
-        "products_details",
-        "total_price",
+        "payment_id",
+        "method",
         "status",
-        "status_details",
+        "details",
+        "status",
+        "amount",
+        "order_id",
     ];
 
-    public function payment()
+    public function order()
     {
-        return $this->hasOne(Payment::class, "order_id");
+        return $this->belongsTo(Order::class, "order_id");
     }
 }

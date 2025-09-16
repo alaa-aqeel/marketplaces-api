@@ -20,9 +20,6 @@ return new class extends Migration
             $table->decimal("total_price", 20, 2);
             $table->string("status")->default(OrderStatus::Pending->value);
             $table->jsonb("status_details")->nullable();
-            $table->string("payment_method")->nullable();
-            $table->jsonb("payment_details")->nullable();
-            $table->string('idempotency_key')->nullable();
             $table->timestamps();
         });
     }
