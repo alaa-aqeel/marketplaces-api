@@ -16,7 +16,7 @@ It unifies product data from multiple marketplaces like (AliExpress, Alibaba, Sh
 - **Performance & Reliability**
     - [X] Caching layer (Redis/File).
     - [X] Circuit Breaker for external APIs.
-    - [ ] Monitoring (p50, p95, p99 latency). [laravel telescope]
+    - [ ] Monitoring (p50, p95, p99 latency). 
 
 
 ## 🧪 Testing
