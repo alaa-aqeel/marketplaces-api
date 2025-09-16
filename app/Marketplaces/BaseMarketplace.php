@@ -38,7 +38,7 @@ abstract class BaseMarketplace implements MarketplaceInterface {
         return Http::withHeaders([
             // 'Authorization' => 'Bearer ' . ($this->config['api_key'] ?? ''),
             'Accept' => 'application/json',
-        ]);
+        ])->timeout(0.1);
     }
 
     protected function fetch(string $path, $parmaters = null, string|null $jsonPath = null): array {

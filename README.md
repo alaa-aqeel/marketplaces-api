@@ -16,7 +16,7 @@ It unifies product data from multiple marketplaces like (AliExpress, Alibaba, Sh
 - **Performance & Reliability**
     - [X] Caching layer (Redis/File).
     - [X] Circuit Breaker for external APIs.
-    - [ ] Monitoring (p50, p95, p99 latency). 
+    - [X] Monitoring (p50, p95, p99 latency). 
 
 
 ## 🧪 Testing
@@ -42,3 +42,5 @@ $ cp .env.example .env
 $ ./vendor/bin/sail up -d
 $ ./vendor/bin/sail artisan migrate
 $ ./vendor/bin/sail artisan db:seed --class=ProductSeeder # dummy products
+$ ./vendor/bin/sail artisan latency:percentiles # show endpoints latency
+```

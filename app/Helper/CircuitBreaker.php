@@ -15,7 +15,7 @@ class CircuitBreaker
     public static function call(string $serviceName, string $cacheKey, \Closure $callback)
     {
         $maxFails = config('services.circuit_breaker.failures', 3);
-        $resetTimeout = config('services.circuit_breaker.reset_timeout', 60);
+        $resetTimeout = config('services.circuit_breaker.reset_timeout', 1);
 
         $circuit = Cache::get("circuit:{$serviceName}", [
             'failures' => 0,
@@ -24,14 +24,9 @@ class CircuitBreaker
         ]);
 
         if ($circuit['state'] === 'OPEN') {
-            // Check if reset timeout has passed
-            if (time() - $circuit['lastFailureTime'] > $resetTimeout) {
-                $circuit['state'] = 'HALF_OPEN';
-                Cache::put("circuit:{$serviceName}", $circuit, $resetTimeout);
-            } else {
-                static::logCircuitBreaker($serviceName, 'OPEN (blocked)');
-                return Cache::get($cacheKey, ['error' => "{$serviceName} unavailable - Circuit OPEN"]);
-            }
+            Cache::put("circuit:{$serviceName}", $circuit, $resetTimeout);
+            static::logCircuitBreaker($serviceName, 'OPEN (blocked)');
+            return Cache::get($cacheKey, ['error' => "{$serviceName} unavailable - Circuit OPEN"]);
         }
 
         try {
@@ -47,20 +42,18 @@ class CircuitBreaker
             static::logCircuitBreaker($serviceName, 'CLOSED (success)');
             return $result;
         } catch (\Exception $e) {
-            // Increment failure count
             $circuit['failures']++;
             $circuit['lastFailureTime'] = time();
+            static::logCircuitBreaker($serviceName, "CLOSED (failure {$circuit['failures']}/{$maxFails})");
 
             // Open circuit if max failures reached
             if ($circuit['failures'] >= $maxFails) {
                 $circuit['state'] = 'OPEN';
                 static::logCircuitBreaker($serviceName, 'OPEN (tripped)');
-            } else {
-                static::logCircuitBreaker($serviceName, "CLOSED (failure {$circuit['failures']}/{$maxFails})");
             }
 
             // Update circuit state in Redis
-            Cache::put("circuit:{$serviceName}", $circuit, $resetTimeout);
+            Cache::put("circuit:{$serviceName}", $circuit);
 
             // Return cached value if available
             return Cache::get($cacheKey, [

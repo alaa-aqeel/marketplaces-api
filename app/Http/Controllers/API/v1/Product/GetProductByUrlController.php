@@ -22,10 +22,10 @@ class GetProductByUrlController extends Controller
         $request->validate([
             "url" => "url|string",
         ]);
-        // $product = Cache::remember("product:url:".$request->get("url"), 60, function () use($request) {
+        $product = Cache::remember("product:url:".$request->get("url"), 0.1, function () use($request) {
 
-            $product = $this->marketplaceService->getProductFromUrl($request->get("url"));
-        // });
+            return $this->marketplaceService->getProductFromUrl($request->get("url"));
+        });
 
         return response()->json($product);
     }
