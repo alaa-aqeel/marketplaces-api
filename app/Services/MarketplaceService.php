@@ -18,6 +18,7 @@ class MarketplaceService {
 
     public function getMarketplaceFromUrl(string $url): MarketplaceInterface|null
     {
+
         if (preg_match('#https?://(?:[a-z0-9-]+\.)*([a-z0-9-]+)\.[a-z]{2,}#i', $url, $matches)) {
             $source = strtolower($matches[1]);
             $commonTlds = ['com', 'org', 'net', 'edu', 'gov', 'co', 'io'];

@@ -1,5 +1,9 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+
 if (!function_exists('normalizeArabic')) {
     /**
      * Normalize Arabic text for searching or processing.
@@ -19,5 +23,21 @@ if (!function_exists('normalizeArabic')) {
         $text = str_replace('ـ', '', $text); // حذف التطويل
         $text = preg_replace('/\s+/u', ' ', $text);
         return trim($text);
+    }
+}
+
+if (!function_exists('latency')) {
+    function logLatency(string $name, \Closure $closure) {
+        $start = microtime(true);
+        $results = $closure();
+        $durationMs = (int)((microtime(true) - $start) * 1000);
+        $reflection = new ReflectionFunction($closure);
+        Log::warning(strtolower("latency:".$name.":".$durationMs), [
+            "function" => $reflection->getName(),
+            "file" => $reflection->getFileName(),
+            "latency" => $durationMs,
+        ]);
+
+        return $results;
     }
 }
