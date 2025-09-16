@@ -62,10 +62,14 @@ class MarketplaceService {
     public function fetchMarketplaceProducts($name, $marketplaceConfig, array $paramaters = [])
     {
         $paramatersString = $paramaters['search'].":".$paramaters['limit'];
-        return CircuitBreaker::call($name, "$name:$paramatersString", function() use($marketplaceConfig, $paramaters) {
-
-            return $this->instanceMarketplace($marketplaceConfig)->fetchProducts($paramaters);
-        });
+        return circuitBreaker($name,
+            "$name:$paramatersString",
+            function() use($marketplaceConfig, $paramaters) {
+                return $this
+                    ->instanceMarketplace($marketplaceConfig)
+                    ->fetchProducts($paramaters);
+            }
+        );
     }
 
     /**
@@ -88,28 +92,22 @@ class MarketplaceService {
     /**
      * Fetch product by id
      *
-     * @param string $marketplace name of marketplace
+     * @param \App\Interfaces\MarketplaceInterface $marketplace name of marketplace
      * @param mixed $id [string|int]
      * @return array|null
      * @throw Exception("invalid marketplace)
      */
-    public function fetechProductById(string $marketplace, mixed $id)
+    public function fetechProductById(MarketplaceInterface $marketplace, mixed $id)
     {
-        if (is_null($id)) {
-            return null;
-        }
-        if (in_array($marketplace, array_keys(config("marketplace")))) {
-            throw new Exception(__("Select invalid marketplace"));
-        }
-
-        return CircuitBreaker::call($marketplace, "$marketplace:product-details:$id", function() use($marketplace, $id) {
-            return $this
-                    ->instanceMarketplace(config("marketplace.$marketplace"))
-                    ->fetchProductDetails($id);
-        });
+        $name = class_basename($marketplace::class); //
+        return circuitBreaker($name,
+            "$name:product-details:$id",
+            function() use($marketplace, $id) {
+                return $marketplace->fetchProductDetails($id);
+            }
+        );
 
     }
-
 
     public function getProductFromUrl(string $url)
     {
@@ -122,10 +120,7 @@ class MarketplaceService {
         $id = $marketplace->extractProductId($url);
         $product = Product::where("external_id", $id)->first(); // first search in database
         if (is_null($product)) { // is null search in sites
-            $name = class_basename($marketplace::class); //
-            return CircuitBreaker::call($name, "$name:product-details:$id", function() use($marketplace, $id) {
-                return $marketplace->fetchProductDetails($id);
-            });
+            return $this->fetechProductById($marketplace, $id);
         }
 
         return $product;

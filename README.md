@@ -42,5 +42,5 @@ $ cp .env.example .env
 $ ./vendor/bin/sail up -d
 $ ./vendor/bin/sail artisan migrate
 $ ./vendor/bin/sail artisan db:seed --class=ProductSeeder # dummy products
-$ ./vendor/bin/sail artisan latency:percentiles # show endpoints latency
+$ ./vendor/bin/sail artisan latency:percentiles # show  latency of endpoints
 ```

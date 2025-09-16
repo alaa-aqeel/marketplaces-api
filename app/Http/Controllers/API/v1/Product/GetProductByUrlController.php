@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\v1\Product;
 use App\Http\Controllers\Controller;
 use App\Repositories\ProductRepository;
 use App\Services\MarketplaceService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -22,8 +23,7 @@ class GetProductByUrlController extends Controller
         $request->validate([
             "url" => "url|string",
         ]);
-        $product = Cache::remember("product:url:".$request->get("url"), 0.1, function () use($request) {
-
+        $product = Cache::tags(["product"])->remember("product:url:".$request->get("url"), 40, function () use($request) {
             return $this->marketplaceService->getProductFromUrl($request->get("url"));
         });
 

@@ -36,7 +36,7 @@ return [
     ],
 
     'circuit_breaker' => [
-        'timeout'  => env('CIRCUIT_BREAKER_TIMEOUT', 30),
+        'timeout'  => env('CIRCUIT_BREAKER_TIMEOUT', 70),
         'failures' => env('CIRCUIT_BREAKER_FAILURES', 3),
     ],
 

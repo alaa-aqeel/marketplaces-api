@@ -1,5 +1,6 @@
 <?php
 
+use App\Helper\CircuitBreaker;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -39,5 +40,12 @@ if (!function_exists('latency')) {
         ]);
 
         return $results;
+    }
+}
+
+if (!function_exists("circuitBreaker")) {
+    function circuitBreaker(string $name, $cacheKey, \Closure $closure) {
+        return (new CircuitBreaker($name, $cacheKey))
+            ->call($closure, config("services.circuit_breaker.timeout", 80));
     }
 }
