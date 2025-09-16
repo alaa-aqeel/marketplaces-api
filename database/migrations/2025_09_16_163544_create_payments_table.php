@@ -14,14 +14,18 @@ return new class extends Migration
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->string("payment_id");
-            $table->string("method");
+            $table->string("gateway");
             $table->string("status");
+            $table->string("currency");
             $table->jsonb("details");
             $table->decimal("amount", 20, 2);
             $table->foreignUuid("order_id")
                 ->constrained("orders")
                 ->cascadeOnDelete();
             $table->timestamps();
+
+            $table->index(['gateway', 'status']);
+            $table->index('payment_id');
         });
     }
 
