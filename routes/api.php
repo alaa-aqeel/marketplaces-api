@@ -1,6 +1,7 @@
 <?php
 
-use App\Http\Controllers\API\v1\Order\CreateOrderController;
+use App\Http\Controllers\API\v1\Order\OrderController;
+use App\Http\Controllers\API\v1\Order\GetOrderController;
 use App\Http\Controllers\API\v1\Product\GetProductByUrlController;
 use App\Http\Controllers\API\v1\Product\GetProductController;
 use Illuminate\Http\Request;
@@ -16,9 +17,10 @@ Route::middleware("log-latency")
         Route::get("product", GetProductByUrlController::class);
 
 
-        Route::middleware("idempotency")
+        Route::apiResource("orders", OrderController::class)->only(["index", "show"]);
+        Route::middleware(["idempotency"])
             ->group(function() {
 
-                Route::post("order", CreateOrderController::class)->name("order.store");
+                Route::apiResource("orders", OrderController::class)->only(["store"]);
             });
     });

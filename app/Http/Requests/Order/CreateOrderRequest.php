@@ -19,10 +19,10 @@ class CreateOrderRequest extends FormRequest
 
         return [
             "fullname" => "required|string|max:255",
-            "phone_number" => "required|string|regex:/^07\d{8}$/",
+            "phone_number" => "required|string|regex:/^07\d{9}$/",
             "products" => "required|array|min:1",
             "products.*.source" => ["required","string", Rule::in($sources)],
-            "products.*.external_id" => ["required", "string"],
+            "products.*.id" => ["required", "string"],
             "products.*.price" => ["required", "numeric", "min:0"],
             "products.*.currency" => ["required", "string", "in:iq,usd"],
             "products.*.title" => ["required", "string", "max:255"]

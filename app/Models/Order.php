@@ -23,6 +23,16 @@ class Order extends Model
         "status_details",
     ];
 
+    public function getProductsDetailsAttribute($value)
+    {
+        return is_null($value) ? null : json_decode($value);
+    }
+
+    public function getStatusDetailsAttribute($value)
+    {
+        return is_null($value) ? [] : json_decode($value);
+    }
+
     public function payment()
     {
         return $this->hasOne(Payment::class, "order_id");

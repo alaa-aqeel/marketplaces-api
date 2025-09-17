@@ -10,9 +10,9 @@ class IdempotencyMiddleware
     public function handle($request, Closure $next)
     {
         $key = $request->header('Idempotency-Key');
-        if (!$key) {
+        if (is_null($key)) {
             return response()->json([
-                'error' => __('Idempotency key is required')
+                'error' => __('Idempotency-Key key is required')
             ], 400);
         }
         $dataHash = md5(json_encode($request->all()));
@@ -35,7 +35,7 @@ class IdempotencyMiddleware
         Cache::put($cacheKey, [
             'data_hash' => $dataHash,
             'response'  => $response->getData(true),
-        ], now()->addMinutes(60));
+        ], now()->addMinutes(10));
 
         return $response;
     }

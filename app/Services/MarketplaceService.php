@@ -64,14 +64,13 @@ class MarketplaceService {
     public function instanceMarketplace(array $config): MarketplaceInterface
     {
         // Ensure 'class' key exists
-        if (!isset($marketplaceConfig['class'])) {
+        if (!isset($config['class'])) {
             throw new \Exception("Marketplace class not defined in configuration.");
         }
-        $marketplace = $marketplaceConfig['class'];
+        $marketplace = $config['class'];
         if (!is_a($marketplace, MarketplaceInterface::class, true)) {
             throw new \Exception("Class must implement MarketplaceInterface");
         }
-        $config = $marketplaceConfig['config'] ?? [];
 
         return new $marketplace($config);
     }
