@@ -15,6 +15,12 @@ class MarketplaceService {
         return config("marketplace");
     }
 
+    /**
+     * Extract Source name from url
+     *
+     * @param string $url
+     * @return null|\App\Interfaces\MarketplaceInterface
+     */
     public function getMarketplaceFromUrl(string $url): MarketplaceInterface|null
     {
         if (preg_match('#https?://(?:[a-z0-9-]+\.)*([a-z0-9-]+)\.[a-z]{2,}#i', $url, $matches)) {
@@ -29,21 +35,33 @@ class MarketplaceService {
             if (is_null($source)) {
                 return null;
             }
-            $marketplace = config("marketplace.$source");
-            if (is_null($marketplace)) {
+            $marketplaceConfig = config("marketplace.$source");
+            if (is_null($marketplaceConfig)) {
                 return null;
             }
-            return $this->instanceMarketplace(config("marketplace.$source"));
+            return $this->instanceMarketplace($marketplaceConfig);
         }
         return null;
     }
 
-    public function extractProductId(string $url): null|string
+    /**
+     * Extract id name from url
+     *
+     * @param string $url
+     * @return null|string|int
+     */
+    public function extractProductId(string $url): null|string|int
     {
         return $this->getMarketplaceFromUrl($url)->extractProductId($url);
     }
 
-    public function instanceMarketplace(array $marketplaceConfig): MarketplaceInterface
+    /**
+     * Get instance of class marketplace
+     *
+     * @param array $config
+     * @return \App\Interfaces\MarketplaceInterface
+     */
+    public function instanceMarketplace(array $config): MarketplaceInterface
     {
         // Ensure 'class' key exists
         if (!isset($marketplaceConfig['class'])) {
@@ -59,21 +77,37 @@ class MarketplaceService {
     }
 
     /**
-     * Update Or Insert Products
+     * Fetch products for marketplace
+     *
+     * @param string $name
+     * @param array $args = []
+     * @return array
      */
-    public function fetchAllProducts(string $search = "", int $limit = 10)
+    public function fetchProductsFor(string $name, array $args = [])
+    {
+        $marketplace = $this->instanceMarketplace(config("marketplace.$name"));
+        return circuitBreaker($name, "marketplace:$name:".join(":", $args),
+            fn()=> $marketplace->mapperList($marketplace->fetchProducts($args))
+        );
+    }
+
+    /**
+     * Fetch All product from all sources
+     *
+     * @param string $serch
+     * @param int $page
+     * @param int limit
+     * @return array
+     */
+    public function fetchAllProducts(string $search = "", int $page = 1, int $limit = 10)
     {
         $products = [];
         foreach($this->getMarketplaces() as $name => $config) {
-            $marketplace = $this->instanceMarketplace($config);
-            $paramatersString = $search.":".$limit;
-            $resp = circuitBreaker($name,
-                "$name:$paramatersString",
-                fn()=> $marketplace->mapperList($marketplace->fetchProducts([
-                    "search" => $search,
-                    "limit" => $limit
-                ]))
-            );
+            $resp = $this->fetchProductsFor($name, [
+                "search" => $search,
+                "page" => $page,
+                "limit" => $limit,
+            ]);
             $products = array_merge($products, $resp);
         }
 
@@ -92,7 +126,7 @@ class MarketplaceService {
     {
         $name = class_basename($marketplace::class); //
         return circuitBreaker($name,
-            "$name:product-details:$id",
+            "marketplace:$name:product-details:$id",
             function() use($marketplace, $id) {
                 return $marketplace->fetchProductDetails($id);
             }
@@ -100,13 +134,20 @@ class MarketplaceService {
 
     }
 
+    /**
+     * Fetch product from url
+     *
+     * @param string $url
+     * @return array|null
+     * @abort("invalid url", 400)
+     */
     public function getProductFromUrl(string $url)
     {
         $marketplace = $this->getMarketplaceFromUrl($url);
         if (is_null($marketplace)) {
             abort(response()->json([
                 "message" => "Invalid Url",
-            ]));
+            ]), 400);
         }
         $id = $marketplace->extractProductId($url);
         $product = Product::where("external_id", $id)->first(); // first search in database

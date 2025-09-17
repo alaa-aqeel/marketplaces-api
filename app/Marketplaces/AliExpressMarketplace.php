@@ -10,6 +10,7 @@ class AliExpressMarketplace extends BaseMarketplace implements MarketplaceInterf
     private function parseQuery(array $paramaters): array
     {
         return [
+            "skip" => $paramaters["page"] ?? 10,
             "limit" => $paramaters["limit"] ?? 10,
             "select" => $paramaters["fields"] ?? '',
             "q" => $paramaters["search"] ?? ''

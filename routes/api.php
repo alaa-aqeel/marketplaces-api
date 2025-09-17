@@ -18,6 +18,7 @@ Route::middleware("log-latency")
 
         Route::middleware("idempotency")
             ->group(function() {
+
                 Route::post("order", CreateOrderController::class)->name("order.store");
             });
     });
