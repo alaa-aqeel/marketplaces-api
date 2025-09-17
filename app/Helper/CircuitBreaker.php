@@ -33,11 +33,14 @@ class CircuitBreaker
     private function onOpenStatus(float $resetTimeout)
     {
         if (time() - $this->circuit['lastFailureTime'] > $resetTimeout) {
-            Cache::forget("circuit:{$this->name}");
+            $this->circuit["state"] = "HALF_OPEN";
+            Cache::put("circuit:{$this->name}", $this->circuit);
+            $this->logStatus('OPEN (blocked)');
+            return ;
+        } else  {
+            $this->logStatus('HALF OPEN try agine');
+            return Cache::get($this->cacheResultKey, ['error' => "{$this->name} unavailable - Circuit OPEN"]);
         }
-
-        $this->logStatus('OPEN (blocked)');
-        return Cache::get($this->cacheResultKey, ['error' => "{$this->name} unavailable - Circuit OPEN"]);
     }
 
     private function onFail()
@@ -54,7 +57,10 @@ class CircuitBreaker
     public function call(\Closure $closure, float $resetTimeout)
     {
         if ($this->circuit['state'] === 'OPEN') {
-            return $this->onOpenStatus($resetTimeout);
+            $result = $this->onOpenStatus($resetTimeout);
+            if ($result) {
+                return $result;
+            }
         }
         try {
             $result = logLatency($this->cacheResultKey, function() use($closure) {
@@ -63,11 +69,11 @@ class CircuitBreaker
             Cache::put($this->cacheResultKey, $result, 3600);
             Cache::forget("circuit:{$this->name}");
             $this->logStatus('CLOSED (success)');
-
             return $result;
         } catch (\Exception $e) {
             $this->onFail();
 
+            Cache::forget("ERROR: ".$e->getMessage());
             return Cache::get($this->cacheResultKey, [
                 'error' => "{$this->name} API failed",
                 'exception' => $e->getMessage()

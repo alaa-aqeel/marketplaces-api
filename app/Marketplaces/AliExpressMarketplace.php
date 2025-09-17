@@ -3,6 +3,7 @@
 namespace App\Marketplaces;
 
 use App\Interfaces\MarketplaceInterface;
+use Illuminate\Http\Client\Pool;
 
 class AliExpressMarketplace extends BaseMarketplace implements MarketplaceInterface
 {
@@ -22,31 +23,36 @@ class AliExpressMarketplace extends BaseMarketplace implements MarketplaceInterf
         return $matches[1] ?? null;
     }
 
-
-
-    public function mapper($product) {
+    public function mapper($data) {
         return [
-            'external_id' => $product['id'] ?? null,
-            'source' => 'alibaba',
-            'title' => $product['title'] ?? null,
-            'description' => $product['description'] ?? null,
-            'price' => $product['price'] ?? null,
-            'currency' => $product['currency'] ?? "usd",
-            'image' => $product['images'][0] ?? null,
-            "image_hash" => $this->hashImage($product['images'][0] ?? null)
+            'external_id' => $data['id'] ?? null,
+            'source' => 'aliexpress',
+            'title' => $data['title'] ?? null,
+            'description' => $data['description'] ?? null,
+            'price' => $data['price'] ?? null,
+            'currency' => $data['currency'] ?? "usd",
+            'image' => $data['images'][0] ?? null,
+            // "image_hash" => $this->hashImage($data['images'][0] ?? null)
         ];
     }
 
-    public function fetchProducts(array $paramaters = []): array
+    public function mapperList($data)
+    {
+        return $this->mapperResponse($data, "products");
+    }
+
+    public function fetchProducts(array $paramaters = [])
     {
         return $this->fetch(
             path: "products/search",
             parmaters: $this->parseQuery($paramaters),
-            jsonPath: "products"
         );
     }
 
-    public function fetchProductDetails(string $productId): array {
-        return $this->fetch("products/$productId");
+    public function fetchProductDetails(string $productId)
+    {
+        $response = $this->fetch("products/$productId");
+
+        return $this->mapperResponse($response);
     }
 }

@@ -3,7 +3,6 @@
 
 namespace App\Services;
 
-use App\Helper\CircuitBreaker;
 use App\Interfaces\MarketplaceInterface;
 use App\Models\Product;
 use Exception;
@@ -59,31 +58,23 @@ class MarketplaceService {
         return new $marketplace($config);
     }
 
-    public function fetchMarketplaceProducts($name, $marketplaceConfig, array $paramaters = [])
-    {
-        $paramatersString = $paramaters['search'].":".$paramaters['limit'];
-        return circuitBreaker($name,
-            "$name:$paramatersString",
-            function() use($marketplaceConfig, $paramaters) {
-                return $this
-                    ->instanceMarketplace($marketplaceConfig)
-                    ->fetchProducts($paramaters);
-            }
-        );
-    }
-
     /**
      * Update Or Insert Products
      */
     public function fetchAllProducts(string $search = "", int $limit = 10)
     {
         $products = [];
-        foreach($this->getMarketplaces() as $name => $marketplace) {
-            $fetchProducts = $this->fetchMarketplaceProducts($name, $marketplace, [
-                "limit" => $limit,
-                "search" => $search
-            ]);
-            $products = array_merge($products, $fetchProducts);
+        foreach($this->getMarketplaces() as $name => $config) {
+            $marketplace = $this->instanceMarketplace($config);
+            $paramatersString = $search.":".$limit;
+            $resp = circuitBreaker($name,
+                "$name:$paramatersString",
+                fn()=> $marketplace->mapperList($marketplace->fetchProducts([
+                    "search" => $search,
+                    "limit" => $limit
+                ]))
+            );
+            $products = array_merge($products, $resp);
         }
 
         return $products;

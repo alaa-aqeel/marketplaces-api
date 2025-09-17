@@ -14,7 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            "log-latency" => RequestLatencyMiddleware::class
+            "log-latency" => RequestLatencyMiddleware::class,
+            "idempotency" => RequestLatencyMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

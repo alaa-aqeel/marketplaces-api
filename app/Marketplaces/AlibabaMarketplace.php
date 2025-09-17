@@ -4,6 +4,7 @@ namespace App\Marketplaces;
 
 use App\Interfaces\MarketplaceInterface;
 use Exception;
+use Illuminate\Http\Client\Pool;
 use Illuminate\Support\Str;
 
 class AlibabaMarketplace extends BaseMarketplace implements MarketplaceInterface
@@ -19,40 +20,42 @@ class AlibabaMarketplace extends BaseMarketplace implements MarketplaceInterface
 
     public static function extractProductId(string $url)
     {
-        preg_match('/detail\/(\d+)\.html/', $url, $matches);
+        preg_match('/product-detail\/(\d+)\.html/', $url, $matches);
+
         return $matches[1] ?? null;
     }
 
-    public function mapper($product) {
-        if (!isset($product['id'])) {
-            throw new Exception("product id missing");
-        }
+    public function mapper($data) {
         return [
-            "id" => Str::uuid(),
-            'source_external_id' => "alibaba:".$product['id'],
-            'external_id' => $product['id'],
+            'external_id' => $data['id'] ?? null,
             'source' => 'alibaba',
-            'title' => $product['title'] ?? null,
-            'description' => $product['description'] ?? null,
-            'price' => $product['price'] ?? null,
-            'currency' => $product['currency'] ?? "usd",
-            'image' => $product['images'][0] ?? null,
-            "image_hash" => $this->hashImage($product['images'][0] ?? null)
+            'title' => $data['title'] ?? null,
+            'description' => $data['description'] ?? null,
+            'price' => $data['price'] ?? null,
+            'currency' => $data['currency'] ?? "usd",
+            'image' => $data['images'][0] ?? null,
+            // "image_hash" => $this->hashImage($data['images'][0] ?? null)
         ];
     }
 
+    public function mapperList($data)
+    {
+        return $this->mapperResponse($data, "products");
+    }
 
-    public function fetchProducts(array $paramaters = []): array
+    public function fetchProducts(array $paramaters = [])
     {
         return $this->fetch(
             path: "products/search",
             parmaters: $this->parseQuery($paramaters),
-            jsonPath: "products"
         );
     }
 
-    public function fetchProductDetails(string $productId): array {
-        return $this->fetch("products/$productId");
+    public function fetchProductDetails(string $productId)
+    {
+        $response = $this->fetch("products/$productId");
+
+        return $this->mapperResponse($response);
     }
 }
 
