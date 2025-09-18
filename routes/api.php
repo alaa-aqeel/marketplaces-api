@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\API\v1\Order\CreateOrderController;
 use App\Http\Controllers\API\v1\Order\OrderController;
 use App\Http\Controllers\API\v1\Order\GetOrderController;
 use App\Http\Controllers\API\v1\Product\GetProductByUrlController;
@@ -17,10 +18,14 @@ Route::middleware("log-latency")
         Route::get("product", GetProductByUrlController::class);
 
 
-        Route::apiResource("orders", OrderController::class)->only(["index", "show"]);
+        Route::apiResource("orders", OrderController::class)->only(["show"]);
         Route::middleware(["idempotency"])
             ->group(function() {
 
-                Route::apiResource("orders", OrderController::class)->only(["store"]);
+                Route::post("order", CreateOrderController::class);
             });
     });
+
+
+
+include "gateway.api.php";

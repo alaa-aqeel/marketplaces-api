@@ -22,8 +22,8 @@ class OrderResource extends JsonResource
             "total_price" => $this->total_price,
             "products" => $this->products_details,
             "status" => [
-                "name" => OrderStatus::from($this->status),
-                "value" => $this->status
+                "name" => $this->status->name,
+                "value" => $this->status?->value
             ],
             "status_details" => $this->status_details,
             "payment" => $this->whenLoaded("payment"),

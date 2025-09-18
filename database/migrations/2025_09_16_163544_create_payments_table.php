@@ -17,13 +17,14 @@ return new class extends Migration
             $table->string("gateway");
             $table->string("status");
             $table->string("currency");
-            $table->jsonb("details");
+            $table->jsonb("details")->nullable();
             $table->decimal("amount", 20, 2);
             $table->foreignUuid("order_id")
                 ->constrained("orders")
                 ->cascadeOnDelete();
             $table->timestamps();
 
+            // index es
             $table->index(['gateway', 'status']);
             $table->index('payment_id');
         });

@@ -15,15 +15,6 @@ class OrderController extends Controller
     function __construct(private OrderRepository $orderRepository)
     {}
 
-    public function store(CreateOrderRequest $request)
-    {
-        $validated = $request->validated();
-        $validated['products_details'] = json_encode($validated["products"]);
-        $order = $this->orderRepository->create($validated);
-
-        return new OrderResource($order);
-    }
-
     public function show(Order $order)
     {
         return new OrderResource($order);

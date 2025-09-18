@@ -7,7 +7,8 @@ use App\Interfaces\MarketplaceInterface;
 use App\Models\Product;
 use Exception;
 
-class MarketplaceService {
+class MarketplaceService 
+{
 
 
     private function getMarketplaces(): array

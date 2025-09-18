@@ -34,11 +34,14 @@ class OrderRepository
 
     public function create(array $data)
     {
-        $products = collect($data["products"]);
-        $data['total_price'] = $products->sum("price");
-        $data["status"] = OrderStatus::Pending->value;
+        return DB::transaction(function () use($data) {
+            $products = collect($data["products"]);
+            $data['total_price'] = $products->sum("price");
+            $data["status"] = OrderStatus::Pending->value;
 
-        return Order::create($data);
+            return Order::create($data);
+        });
+
     }
 
     public function get($id)

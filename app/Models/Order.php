@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enum\OrderStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
@@ -26,6 +27,11 @@ class Order extends Model
     public function getProductsDetailsAttribute($value)
     {
         return is_null($value) ? null : json_decode($value);
+    }
+
+    public function getStatusAttribute($value)
+    {
+        return OrderStatus::from($value);
     }
 
     public function getStatusDetailsAttribute($value)

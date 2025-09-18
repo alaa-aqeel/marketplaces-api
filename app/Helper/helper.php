@@ -49,3 +49,14 @@ if (!function_exists("circuitBreaker")) {
             ->call($closure, config("services.circuit_breaker.timeout", 80));
     }
 }
+
+
+if (!function_exists("abort_error"))
+{
+    function abortError($message, int $statusCode = 400) {
+        abort(response()->json([
+            "status" => "error",
+            "message" => $message,
+        ], $statusCode));
+    }
+}

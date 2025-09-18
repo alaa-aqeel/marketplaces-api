@@ -25,7 +25,7 @@ class CreateOrderRequest extends FormRequest
             "products.*.id" => ["required", "string"],
             "products.*.price" => ["required", "numeric", "min:0"],
             "products.*.currency" => ["required", "string", "in:iq,usd"],
-            "products.*.title" => ["required", "string", "max:255"]
+            "products.*.title" => ["required", "string", "max:255"],
         ];
     }
 }
