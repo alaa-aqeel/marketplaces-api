@@ -14,14 +14,22 @@ class PaymentCheckoutController extends Controller
     {
         $request->validate([
             "payment_id" => "required|string|uuid",
+            "is_success" => "required|boolean"
         ]);
         $payment = Payment::where("payment_id", $request->get("payment_id"))->first();
         if (is_null($payment)) {
             return response()->json("not found", 404);
         }
-        $payment->update(["status" => PaymentStatus::Authorized->value]);
-        $payment->order()->update(["status" => OrderStatus::Confirmed->value]);
+        if (boolval($request->get("is_success"))) {
+            $payment->update(["status" => PaymentStatus::Authorized->value]);
+            $payment->order()->update(["status" => OrderStatus::Confirmed->value]);
 
-        return response()->json("successful authrized payment", 200);
+            return response()->json("successful authrized payment", 200);
+        } else {
+            $payment->update(["status" => PaymentStatus::Failed->value]);
+            $payment->order()->update(["status" => OrderStatus::PaymentFailed->value]);
+
+            return response()->json("failed payment", 400);
+        }
     }
 }

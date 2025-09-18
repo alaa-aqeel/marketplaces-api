@@ -12,6 +12,7 @@ enum OrderStatus: string
     case Delivered = 'delivered';
     case Done      = 'done';
     case Cancelled = 'cancelled';
+    case PaymentFailed = 'payment-failed';
 
     /**
      * Return possible next statuses from current status
@@ -20,21 +21,11 @@ enum OrderStatus: string
     {
         return match($this) {
             self::Pending => [],
-            self::Confirmed => [
-                self::Processing,
-                self::Cancelled
-            ],
-            self::Processing => [
-                self::Shipped,
-                self::Cancelled
-            ],
-            self::Shipped => [
-                self::Delivered,
-                self::Cancelled
-            ],
-            self::Delivered => [
-                self::Done
-            ],
+            self::PaymentFailed => [],
+            self::Confirmed => [ self::Processing, self::Cancelled],
+            self::Processing => [self::Shipped, self::Cancelled],
+            self::Shipped => [ self::Delivered,  self::Cancelled],
+            self::Delivered => [self::Done],
             self::Done => [],
             self::Cancelled => [],
         };

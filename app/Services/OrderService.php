@@ -26,7 +26,7 @@ class OrderService
             $data['products_details'] = json_encode($data["products"]);
             $data['stauts'] = OrderStatus::Pending->value;
             $order = $this->orderRepository->create($data);
-            $payment = Payment::create([
+            $payment = Payment::create([ // create
                 "payment_id" => Str::uuid(),
                 "gateway" => "test",
                 "status" => PaymentStatus::Pending->value,
@@ -34,6 +34,7 @@ class OrderService
                 "currency" => "usd",
                 "order_id" => $order->id,
             ]);
+            //[gateway]: create payment
 
             return [
                 "payment_id" => $payment->payment_id,
@@ -41,6 +42,25 @@ class OrderService
             ];
         });
 
+    }
+
+    public function createOrderPayment(Order $order): Payment
+    {
+        $order->update([
+            "status" => OrderStatus::Pending->value
+        ]);
+        $order->refresh();
+        $payment = Payment::create([ // create
+            "payment_id" => Str::uuid(),
+            "gateway" => "test",
+            "status" => PaymentStatus::Pending->value,
+            "amount" => $order->total_price,
+            "currency" => "usd",
+            "order_id" => $order->id,
+        ]);
+        //[gateway]: create payment
+
+        return $payment;
     }
 
 
@@ -87,6 +107,7 @@ class OrderService
                 ->where("status", PaymentStatus::Authorized->value)
                 ->update(["status" => PaymentStatus::Paid->value])
                 ;
+            //[gateway]: make payment paid
             $order->refresh();
 
             return $order;
@@ -122,9 +143,9 @@ class OrderService
         $order->refresh();
         $order->payments()
             ->where("status", PaymentStatus::Paid->value)
-            ->where("status", PaymentStatus::Authorized->value)
             ->update(["status" => PaymentStatus::Refunded->value])
             ;
+        //[gateway]: refunded payment paid
         $order->refresh();
 
         return $order;
