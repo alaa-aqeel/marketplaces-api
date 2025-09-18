@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enum\OrderStatus;
+use App\Enum\PaymentStatus;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
@@ -39,8 +40,13 @@ class Order extends Model
         return is_null($value) ? [] : json_decode($value);
     }
 
-    public function payment()
+    public function payments()
     {
-        return $this->hasOne(Payment::class, "order_id");
+        return $this->hasMany(Payment::class, "order_id")
+            ->whereIn("status", [
+                PaymentStatus::Pending->value,
+                PaymentStatus::Authorized->value,
+                PaymentStatus::Paid->value,
+            ]);
     }
 }

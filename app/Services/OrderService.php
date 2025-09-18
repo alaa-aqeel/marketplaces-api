@@ -42,4 +42,91 @@ class OrderService
         });
 
     }
+
+
+    public function handleStatus(Order $order, OrderStatus $status)
+    {
+        if (!$order->status->canTransaction($status)) {
+            abortError("Cannot change status from ".$order->status->name." to ".$status->name);
+        }
+
+        switch ($status) {
+            case OrderStatus::Processing:
+                return $this->handleProcessingStatus($order);
+            case OrderStatus::Shipped:
+                return $this->handleShippedStatus($order);
+            case OrderStatus::Delivered:
+                return $this->handleDeliveredStatus($order);
+            case OrderStatus::Done:
+                return $this->handleDoneStatus($order);
+            case OrderStatus::Cancelled:
+                return $this->handleCancelledStatus($order);
+        }
+
+        abortError("Failed handle status");
+    }
+
+
+    public function handleProcessingStatus(Order $order)
+    {
+        $order->update([
+            "status" => OrderStatus::Processing->value
+        ]);
+        $order->refresh();
+
+        return $order;
+    }
+
+    public function handleShippedStatus(Order $order)
+    {
+        return DB::transaction(function() use($order) {
+            $order->update([
+                "status" => OrderStatus::Shipped->value
+            ]);
+            $order->payments()
+                ->where("status", PaymentStatus::Authorized->value)
+                ->update(["status" => PaymentStatus::Paid->value])
+                ;
+            $order->refresh();
+
+            return $order;
+        });
+
+    }
+
+    public function handleDeliveredStatus(Order $order)
+    {
+        $order->update([
+            "status" => OrderStatus::Delivered->value
+        ]);
+        $order->refresh();
+
+        return $order;
+    }
+
+    public function handleDoneStatus(Order $order)
+    {
+        $order->update([
+            "status" => OrderStatus::Done->value
+        ]);
+        $order->refresh();
+
+        return $order;
+    }
+
+    public function handleCancelledStatus(Order $order)
+    {
+        $order->update([
+            "status" => OrderStatus::Cancelled->value
+        ]);
+        $order->refresh();
+        $order->payments()
+            ->where("status", PaymentStatus::Paid->value)
+            ->where("status", PaymentStatus::Authorized->value)
+            ->update(["status" => PaymentStatus::Refunded->value])
+            ;
+        $order->refresh();
+
+        return $order;
+    }
 }

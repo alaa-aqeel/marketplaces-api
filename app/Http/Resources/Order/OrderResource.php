@@ -26,7 +26,7 @@ class OrderResource extends JsonResource
                 "value" => $this->status?->value
             ],
             "status_details" => $this->status_details,
-            "payment" => $this->whenLoaded("payment"),
+            "payments" => $this->whenLoaded("payments"),
             "updated_at" => $this->updated_at,
             "created_at" => $this->created_at,
         ];

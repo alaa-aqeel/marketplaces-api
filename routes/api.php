@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\API\v1\Order\CreateOrderController;
 use App\Http\Controllers\API\v1\Order\OrderController;
-use App\Http\Controllers\API\v1\Order\GetOrderController;
+use App\Http\Controllers\API\v1\Order\StatusOrderController;
 use App\Http\Controllers\API\v1\Product\GetProductByUrlController;
 use App\Http\Controllers\API\v1\Product\GetProductController;
 use Illuminate\Http\Request;
@@ -22,8 +22,10 @@ Route::middleware("log-latency")
         Route::middleware(["idempotency"])
             ->group(function() {
 
-                Route::post("order", CreateOrderController::class);
+                Route::post("orders", CreateOrderController::class);
             });
+
+        Route::post("orders/{order}/status", StatusOrderController::class);
     });
 
 

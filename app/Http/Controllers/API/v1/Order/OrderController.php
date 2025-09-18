@@ -17,6 +17,6 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        return new OrderResource($order);
+        return new OrderResource($order->load("payments"));
     }
 }
