@@ -9,6 +9,7 @@ use App\Services\MarketplaceService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class GetProductController extends Controller
 {
@@ -25,20 +26,31 @@ class GetProductController extends Controller
         $limit = $request->get("limit", 10);
         $q = $request->get("q", '');
         $page = $request->get("page", 1);
-        $products = Cache::tags(["product", "all"])->remember(
-            "products:search:$q:limit:$limit:page:$page", 60,
-            function() use($limit, $q, $page) {
-                try {
-                    return $this->service->fetchAllProducts($q, $page, $limit);
-                } catch(Exception $e) {
-                    Cache::tags(["prdouct", "all"])->flush();
-                    abort(response()->json([
-                        "message" => $e->getMessage()
-                    ]), 400);
-                }
-            }
-        );
-
-        return response()->json($products);
+        try {
+            $products = Cache::tags(["product", "all"])
+                    ->remember(
+                        "products:search:$q:limit:$limit:page:$page", 60,
+                        function() use($limit, $q, $page) {
+                                try {
+                                    return $this->service->fetchAllProducts($q, $page, $limit);
+                                } catch(Exception $e) {
+                                    Cache::tags(["prdouct", "all"])->flush();
+                                    abort(response()->json([
+                                        "message" => $e->getMessage()
+                                    ]), 400);
+                                }
+                        }
+                );
+            return response()->json($products);
+        } catch(Exception $e) {
+            Cache::forget("products:search:$q:limit:$limit:page:$page");
+            Log::error('Failed to fetch products', [
+                $e->getMessage()
+            ]);
+            return response()->json([
+                "stauts" => "error",
+                'message' => 'Failed to fetch all products',
+            ]);
+        }
     }
 }

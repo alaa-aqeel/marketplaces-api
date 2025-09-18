@@ -8,6 +8,7 @@ use App\Services\MarketplaceService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class GetProductByUrlController extends Controller
 {
@@ -23,16 +24,19 @@ class GetProductByUrlController extends Controller
         $request->validate([
             "url" => "url|string",
         ]);
-        $product = Cache::tags(["product", "id"])->remember("product:url:".$request->get("url"), 40, function () use($request) {
-            try{
+        try{
+            $product = Cache::tags(["product", "id"])->remember("product:url:".$request->get("url"), 40, function () use($request) {
                 return $this->marketplaceService->getProductFromUrl($request->get("url"));
-            } catch(Exception $e) {
-                Cache::tags(["product", "id"])->flush();
-                abort(response()->json([
-                    "error" => $e->getMessage()
-                ], 400));
-            }
-        });
+            });
+        } catch(Exception $e) {
+            Cache::tags(["product", "id"])->flush();
+            Log::error('Failed to fetch product from url: '.$request->get("url"), [
+                $e->getMessage()
+            ]);
+            abort(response()->json([
+                "error" => $e->getMessage()
+            ], 400));
+        }
 
         return response()->json($product);
     }

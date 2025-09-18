@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API\v1\Order;
 
 use App\Enum\OrderStatus;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Order\CreateOrderRequest;
 use App\Models\Order;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
